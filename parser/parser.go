@@ -1,15 +1,11 @@
 package begojson
 
-
-
 import (
-	"strings"
 	"strconv"
+	"strings"
 )
 
 //import "fmt"
-
-
 
 /* type for BegoNull ...*/
 type jsonType int8
@@ -19,7 +15,7 @@ type begoParserStatus int8
 
 /* valueType in json*/
 const (
-	jsonNULL jsonType= iota
+	jsonNULL jsonType = iota
 	jsonFALSE
 	jsonTRUE
 	jsonNUMBER
@@ -30,26 +26,23 @@ const (
 
 /* result from parser*/
 const (
-	ParserOk begoParserStatus= iota
+	ParserOk begoParserStatus = iota
 	ParserExpectValue
 	ParserInvalidValue
 	ParserRootNotSingular
 	ParserNumberTooBig
 )
 
-
-
 /* store info from parser*/
 type begoValue struct {
 	_type jsonType
 	value float64
-
 }
 
 /*our context to store json file string and other things*/
 type context struct {
-	json  string
-	index int //index for json string
+	json   string
+	index  int //index for json string
 	length int
 }
 
@@ -60,13 +53,13 @@ func (c *context) parserWhiteSpace() {
 	str := c.json
 	length := c.length
 
-	if( i >=length ) {
+	if i >= length {
 		return
 	}
 
 	for str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r' {
 		i++
-		if( i >=length ) {
+		if i >= length {
 			c.index = i
 			return
 		}
@@ -74,104 +67,97 @@ func (c *context) parserWhiteSpace() {
 	c.index = i
 }
 
-
-
 /*parser true false  null*/
-func (c *context )parserCommon(aimStr string, v *begoValue) begoParserStatus{
-	i   :=c.index
-	str :=c.json
-	length :=len( aimStr)
+func (c *context) parserCommon(aimStr string, v *begoValue) begoParserStatus {
+	i := c.index
+	str := c.json
+	length := len(aimStr)
 
-	if c.length <= i+ length -1 || strings.EqualFold(str[ i : i+length-1] , aimStr){
+	if c.length <= i+length-1 || strings.EqualFold(str[i:i+length-1], aimStr) {
 		return ParserInvalidValue
 	}
-	c.index +=length
+	c.index += length
 
-	if  aimStr=="null"{
+	if aimStr == "null" {
 
-		v._type=jsonNULL
-	}else if aimStr=="false"{
+		v._type = jsonNULL
+	} else if aimStr == "false" {
 
-		v._type=jsonFALSE
-	}else {
+		v._type = jsonFALSE
+	} else {
 
-		v._type=jsonTRUE
+		v._type = jsonTRUE
 	}
-	return  ParserOk
+	return ParserOk
 }
 
+func isDigit(ch byte) bool {
 
-
-func isDigit(ch byte) bool{
-
-	if ch >= '0'&& ch <='9'{
+	if ch >= '0' && ch <= '9' {
 		return true
 	}
 	return false
 }
 
-func isDigit1To9(ch byte) bool{
+func isDigit1To9(ch byte) bool {
 
-	if ch >= '1'&& ch <='9'{
+	if ch >= '1' && ch <= '9' {
 		return true
 	}
 	return false
 }
-
 
 /*parser number*/
 
-func(c *context) parserNumber(v *begoValue) begoParserStatus{
+func (c *context) parserNumber(v *begoValue) begoParserStatus {
 
 	i := c.index
-	json :=c.json
+	json := c.json
 
-	if i<c.length && json[i] == '-'{
+	if i < c.length && json[i] == '-' {
 		i++
 	}
 
-	if i<c.length && json[i] == '0'{
+	if i < c.length && json[i] == '0' {
 		i++
-	}else{
-		if i >= c.length || !isDigit1To9( json[i]){
+	} else {
+		if i >= c.length || !isDigit1To9(json[i]) {
 
 			return ParserInvalidValue
 		}
 
-		for i=i+1;i< c.length && isDigit( json[i]) ;i++ {
+		for i = i + 1; i < c.length && isDigit(json[i]); i++ {
 		}
 	}
 
-
-	if i< c.length && json[i] == '.'{
+	if i < c.length && json[i] == '.' {
 		i++
-		if i >= c.length || !isDigit( json[i]){
+		if i >= c.length || !isDigit(json[i]) {
 			return ParserInvalidValue
 		}
-		for i=i+1;i< c.length && isDigit( json[i]) ;i++ {
+		for i = i + 1; i < c.length && isDigit(json[i]); i++ {
 		}
 
 	}
 
-
-	if i<c.length && (json[i]=='e'|| json[i] =='E'){
+	if i < c.length && (json[i] == 'e' || json[i] == 'E') {
 		i++
-		if i<c.length && json[i] == '+' ||json[i] == '-'{
+		if i < c.length && json[i] == '+' || json[i] == '-' {
 			i++
 		}
 
-		if i >= c.length || !isDigit( json[i]){
+		if i >= c.length || !isDigit(json[i]) {
 			return ParserInvalidValue
 		}
-		for i=i+1;i< c.length && isDigit( json[i]) ;i++ {
+		for i = i + 1; i < c.length && isDigit(json[i]); i++ {
 		}
 
 	}
 
-	value, erron := strconv.ParseFloat(c.json[c.index:i],64)
+	value, erron := strconv.ParseFloat(c.json[c.index:i], 64)
 
 	//number is  to big
-	if erron!=nil {
+	if erron != nil {
 		return ParserNumberTooBig
 	}
 
@@ -183,16 +169,15 @@ func(c *context) parserNumber(v *begoValue) begoParserStatus{
 
 }
 
-
 /*return the status of parser*/
 func (c *context) parserValue(v *begoValue) begoParserStatus {
 	switch ch := c.json[c.index]; ch {
 	case 'n':
-		return c.parserCommon("null",v)
+		return c.parserCommon("null", v)
 	case 't':
-		return c.parserCommon("true",v)
+		return c.parserCommon("true", v)
 	case 'f':
-		return c.parserCommon("false",v)
+		return c.parserCommon("false", v)
 	case '"':
 		return ParserOk
 	default:
@@ -200,23 +185,23 @@ func (c *context) parserValue(v *begoValue) begoParserStatus {
 	}
 }
 
-func parser(v *begoValue, json string) begoParserStatus{
-	c := context{json: json, index: 0, length:len(json)}
-	v._type = jsonNULL	//initize the type
+func parser(v *begoValue, json string) begoParserStatus {
+	c := context{json: json, index: 0, length: len(json)}
+	v._type = jsonNULL //initize the type
 
 	c.parserWhiteSpace()
-	ret :=c.parserValue(v)
+	ret := c.parserValue(v)
 	c.parserWhiteSpace()
 
-	if  ret ==ParserOk{
+	if ret == ParserOk {
 
 		c.parserWhiteSpace()
-		if c.index  < c.length{
+		if c.index < c.length {
 			ret = ParserRootNotSingular
 		}
 	}
 
-	return  ret
+	return ret
 }
 
 /*get the _type of begoValue*/
@@ -228,7 +213,7 @@ func getJSONType(v *begoValue) jsonType {
 	return v._type
 }
 
-func getNumber(v *begoValue) float64{
+func getNumber(v *begoValue) float64 {
 	if v == nil {
 		panic("*begoValue cannot be nil")
 	}
