@@ -37,6 +37,8 @@ const (
 type begoValue struct {
 	_type jsonType
 	value float64
+	str   string
+	len   int
 }
 
 /*our context to store json file string and other things*/
@@ -108,7 +110,6 @@ func isDigit1To9(ch byte) bool {
 }
 
 /*parser number*/
-
 func (c *context) parserNumber(v *begoValue) begoParserStatus {
 
 	i := c.index
@@ -169,6 +170,12 @@ func (c *context) parserNumber(v *begoValue) begoParserStatus {
 
 }
 
+/*parser string*/
+func (c *context) parserString(v *begoValue) begoParserStatus {
+
+	return ParserOk
+}
+
 /*return the status of parser*/
 func (c *context) parserValue(v *begoValue) begoParserStatus {
 	switch ch := c.json[c.index]; ch {
@@ -179,7 +186,7 @@ func (c *context) parserValue(v *begoValue) begoParserStatus {
 	case 'f':
 		return c.parserCommon("false", v)
 	case '"':
-		return ParserOk
+		return c.parserString(v)
 	default:
 		return c.parserNumber(v)
 	}
@@ -194,7 +201,6 @@ func parser(v *begoValue, json string) begoParserStatus {
 	c.parserWhiteSpace()
 
 	if ret == ParserOk {
-
 		c.parserWhiteSpace()
 		if c.index < c.length {
 			ret = ParserRootNotSingular
@@ -204,18 +210,50 @@ func parser(v *begoValue, json string) begoParserStatus {
 	return ret
 }
 
-/*get the _type of begoValue*/
-func getJSONType(v *begoValue) jsonType {
-
+func assertValueNotNull(v *begoValue) {
 	if v == nil {
 		panic("*begoValue cannot be nil")
 	}
+}
+
+/*get the _type of begoValue*/
+func getJSONType(v *begoValue) jsonType {
+	assertValueNotNull(v)
 	return v._type
 }
 
 func getNumber(v *begoValue) float64 {
-	if v == nil {
-		panic("*begoValue cannot be nil")
-	}
+	assertValueNotNull(v)
 	return v.value
+}
+
+func setNumber(v *begoValue, n float64) {
+	assertValueNotNull(v)
+	v.str = ""
+	v.value = n
+	v._type = jsonNUMBER
+}
+
+func getBoolen(v *begoValue) bool {
+	if v == nil || (v._type != jsonFALSE && v._type != jsonTRUE) {
+		panic("*begoValue is wrong in getBoolen")
+	}
+
+	return v._type == jsonTRUE
+}
+
+func setBoolen(v *begoValue, b bool) {
+	assertValueNotNull(v)
+	v.str = ""
+	v._type = jsonFALSE
+	if b {
+		v._type = jsonTRUE
+	}
+}
+
+func setString(v *begoValue, s string) {
+	assertValueNotNull(v)
+	v.str = ""
+	v._type = jsonSTRING
+	v.str = s
 }

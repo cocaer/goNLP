@@ -23,16 +23,19 @@ func testBase(except interface{}, actual interface{}, t *testing.T, msg string) 
 }
 
 func TestParserNull(t *testing.T) {
-
-	v, status := initAndParser("null")
-
+	var v begoValue
+	var status begoParserStatus
+	setBoolen(&v, false)
+	v, status = initAndParser("null")
 	testBase(ParserOk, status, t, "parser fail")
 	testBase(jsonNULL, getJSONType(&v), t, "test parser null")
 }
 
 func TestParserInvalid(t *testing.T) {
-	v, status := initAndParser("?")
-
+	var v begoValue
+	var status begoParserStatus
+	setBoolen(&v, false)
+	v, status = initAndParser("?")
 	testBase(ParserInvalidValue, status, t, "parser fail")
 	testBase(jsonNULL, getJSONType(&v), t, "test parser Invalid")
 
@@ -63,6 +66,10 @@ func TestParserTrue(t *testing.T) {
 	testBase(ParserOk, status, t, "parser fail")
 
 	testBase(jsonTRUE, getJSONType(&v), t, "test parser true")
+	testBase(true, getBoolen(&v), t, "get true wrong")
+	setBoolen(&v, false)
+	testBase(jsonFALSE, v._type, t, "set fasle wrong")
+
 }
 
 func TestParserNumber(t *testing.T) {
