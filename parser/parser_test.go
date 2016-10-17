@@ -16,12 +16,12 @@ func TestParserExceptValue(t *testing.T){
 
 func testBase(except interface{}, actual interface{}, t *testing.T, msg string) {
 
-	//fmt.Println("!!!!!!!!!!",except,actual)
 	if except != actual {
 		t.Error(msg)
 	}
 }
 
+/*
 func TestParserNull(t *testing.T) {
 	var v begoValue
 	var status begoParserStatus
@@ -92,9 +92,32 @@ func TestParserNumber(t *testing.T) {
 	testNumberInvaild(t, "NAN", ParserInvalidValue)
 }
 
-func testNumberInvaild(t *testing.T, strNum string, status begoParserStatus) {
+
+func TestParserStack(t *testing.T) {
+	c := context{}
+
+	c.pushByte('a')
+	c.pushByte('b')
+	c.pushByte('c')
+
+	v := c.popBytes(2)
+
+	if v[0] != 'b' && v[1] != 'c' {
+		t.Error()
+	}
+	c.pushBytes([]byte{'e', 'f'})
+
+	v = c.popBytes(2)
+
+	if v[0] != 'e' && v[1] != 'f' {
+		t.Error()
+	}
+
+}
+
+func testNumberInvaild(t *testing.T, strNum string, s begoParserStatus) {
 	v, status := initAndParser(strNum)
-	testBase(status, status, t, "parser fail")
+	testBase(s, status, t, "parser fail")
 	v._type = jsonNULL
 
 }
@@ -104,9 +127,32 @@ func testNumberEqual(t *testing.T, strNum string, num float64) {
 	testBase(ParserOk, status, t, "parser fail")
 	testBase(num, getNumber(&v), t, "test parser number")
 }
+*/
 
 func initAndParser(json string) (v begoValue, s begoParserStatus) {
 	v._type = jsonFALSE
 	s = parser(&v, json)
 	return v, s
+}
+
+func TestParserString(t *testing.T) {
+	testStringEqual(t, "", `""`)
+	testStringEqual(t, "a", `"a"`)
+	testStringEqual(t, "abc", `"abc"`)
+	testStringEqual(t, "\\", `"\\"`)
+	testStringEqual(t, "json\n", `"json\n"`) // { "name" : "json\n"}
+
+}
+
+func TestParserMissQuotationMark(t *testing.T) {
+	_, status := initAndParser(`"json`)
+	//t.Error(status, ".....")
+	testBase(ParserMissQuotationMark, status, t, "parser Miss Quotation")
+}
+
+func testStringEqual(t *testing.T, s1 string, s2 string) {
+	v, status := initAndParser(s2)
+	testBase(ParserOk, status, t, "parser string fail")
+	//t.Error("!!!!!!!!!!", v.str, "----", s1, status)
+	testBase(s1, v.str, t, "parser string equal fail")
 }
