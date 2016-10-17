@@ -21,7 +21,6 @@ func testBase(except interface{}, actual interface{}, t *testing.T, msg string) 
 	}
 }
 
-/*
 func TestParserNull(t *testing.T) {
 	var v begoValue
 	var status begoParserStatus
@@ -74,12 +73,12 @@ func TestParserTrue(t *testing.T) {
 
 func TestParserNumber(t *testing.T) {
 
-	testNumberEqual(t, "  223", 223)
+	testNumberEqual(t, "  223  ", 223)
 	testNumberEqual(t, "0.123", 0.123)
 	testNumberEqual(t, "1.123", 1.123)
 	testNumberEqual(t, "-0.123", -0.123)
 	testNumberEqual(t, "8e10", 8e10)
-	testNumberEqual(t, "1.234E+10", 1.234E+10)
+	testNumberEqual(t, "1.234E+10   ", 1.234E+10)
 	testNumberEqual(t, "1e-10000", 0.0)
 	testNumberEqual(t, "1E+10", 1E+10)
 	testNumberEqual(t, "1E-10", 1E-10)
@@ -91,7 +90,6 @@ func TestParserNumber(t *testing.T) {
 	testNumberInvaild(t, ".123", ParserInvalidValue)
 	testNumberInvaild(t, "NAN", ParserInvalidValue)
 }
-
 
 func TestParserStack(t *testing.T) {
 	c := context{}
@@ -127,7 +125,6 @@ func testNumberEqual(t *testing.T, strNum string, num float64) {
 	testBase(ParserOk, status, t, "parser fail")
 	testBase(num, getNumber(&v), t, "test parser number")
 }
-*/
 
 func initAndParser(json string) (v begoValue, s begoParserStatus) {
 	v._type = jsonFALSE
@@ -142,12 +139,21 @@ func TestParserString(t *testing.T) {
 	testStringEqual(t, "\\", `"\\"`)
 	testStringEqual(t, "json\n", `"json\n"`) // { "name" : "json\n"}
 
+	testParserMissQuotationMark(t)
+	testParserInvalidStringEscape(t)
 }
 
-func TestParserMissQuotationMark(t *testing.T) {
+func testParserMissQuotationMark(t *testing.T) {
 	_, status := initAndParser(`"json`)
-	//t.Error(status, ".....")
 	testBase(ParserMissQuotationMark, status, t, "parser Miss Quotation")
+}
+
+func testParserInvalidStringEscape(t *testing.T) {
+	_, status := initAndParser(`"\v"`)
+	testBase(ParserInvalidStringEscape, status, t, "parser  invalid string escape ")
+	_, status = initAndParser("\"\x10\"")
+	testBase(ParserInvalidStringChar, status, t, "parser invalid char")
+
 }
 
 func testStringEqual(t *testing.T, s1 string, s2 string) {

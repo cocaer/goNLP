@@ -203,7 +203,6 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 	for ; i < len(c.json); i++ {
 
 		ch := c.json[i]
-		//	fmt.Printf("#####%d %c\n", i, ch)
 		switch ch {
 
 		case '"':
@@ -242,24 +241,23 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 				c.pushByte('\t')
 				break
 			default:
-				//TODO
-
 				return ParserInvalidStringEscape
 			}
 			break
 
 		default:
-			c.pushByte(ch)
-			//	fmt.Println("!!!!!!!!!", i, len(c.json))
-			if i >= len(c.json)-1 {
+			if i > len(c.json)-1 {
 				//TODO
+				c.index = i + 1
 				return ParserMissQuotationMark
 			} else if ch < 0x20 {
+				c.index = i + 1
 				return ParserInvalidStringChar
 			}
+			c.pushByte(ch)
+
 		}
 
 	}
-	//fmt.Print("ffffffffffffff")
-	return ParserInvalidStringEscape
+	return ParserMissQuotationMark
 }
