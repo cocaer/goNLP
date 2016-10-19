@@ -1,8 +1,6 @@
 package begojson
 
-import (
-	"testing"
-)
+import "testing"
 
 /*
 func TestParserExceptValue(t *testing.T){
@@ -21,6 +19,7 @@ func testBase(except interface{}, actual interface{}, t *testing.T, msg string) 
 	}
 }
 
+/*
 func TestParserNull(t *testing.T) {
 	var v begoValue
 	var status begoParserStatus
@@ -111,7 +110,7 @@ func TestParserStack(t *testing.T) {
 		t.Error()
 	}
 
-}
+}*/
 
 func testNumberInvaild(t *testing.T, strNum string, s begoParserStatus) {
 	v, status := initAndParser(strNum)
@@ -134,9 +133,13 @@ func initAndParser(json string) (v begoValue, s begoParserStatus) {
 
 func TestParserString(t *testing.T) {
 	testStringEqual(t, "", `""`)
-	testStringEqual(t, "a", `"a"`)
+	testStringEqual(t, "\x30", "\"\x30\"")
 	testStringEqual(t, "abc", `"abc"`)
 	testStringEqual(t, "\\", `"\\"`)
+	testStringEqual(t, "劲", `"\u52B2"`)
+	testStringEqual(t, "\xF0\x9D\x84\x9E", "\"\\uD834\\uDD1E\"")
+	testStringEqual(t, "\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\"")
+
 	testStringEqual(t, "json\n", `"json\n"`) // { "name" : "json\n"}
 
 	testParserMissQuotationMark(t)
@@ -159,6 +162,7 @@ func testParserInvalidStringEscape(t *testing.T) {
 func testStringEqual(t *testing.T, s1 string, s2 string) {
 	v, status := initAndParser(s2)
 	testBase(ParserOk, status, t, "parser string fail")
-	//t.Error("!!!!!!!!!!", v.str, "----", s1, status)
+	//t.Error(".....", v.str)
+	//t.Error(".....", s1)
 	testBase(s1, v.str, t, "parser string equal fail")
 }

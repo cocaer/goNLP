@@ -1,5 +1,10 @@
 package begojson
 
+import (
+	"strconv"
+	"unicode/utf8"
+)
+
 func assertValueNotNull(v *begoValue) {
 	if v == nil {
 		panic("*begoValue cannot be nil")
@@ -85,4 +90,23 @@ func (c *context) popBytes(length int) []byte {
 	ret := c.s[len(c.s)-length:]
 	c.s = c.s[0 : len(c.s)-length]
 	return ret
+}
+
+func getu4(s []byte) (rune, uint64) {
+	if len(s) < 5 || s[0] != 'u' {
+		return -1, 1
+	}
+	r, err := strconv.ParseUint(string(s[1:5]), 16, 64)
+	if err != nil {
+		return -1, 1
+	}
+	return rune(r), r
+}
+
+func push4u(r rune, c *context) {
+	buff := make([]byte, 6)
+	n := utf8.EncodeRune(buff, r)
+	for i := 0; i < n; i++ {
+		c.pushByte(buff[i])
+	}
 }

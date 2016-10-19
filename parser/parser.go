@@ -1,11 +1,6 @@
 package begojson
 
-import (
-	"fmt"
-	"strconv"
-)
-
-//import "fmt"
+import "strconv"
 
 /* type for BegoNull ...*/
 type jsonType int8
@@ -170,7 +165,6 @@ func parser(v *begoValue, json string) begoParserStatus {
 	if ret == ParserOk {
 		c.parserWhiteSpace()
 		if c.index < leng {
-			fmt.Println("c.index, leng", c.index, leng)
 			ret = ParserRootNotSingular
 		}
 	}
@@ -201,7 +195,6 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 	i := c.index + 1
 
 	for ; i < len(c.json); i++ {
-
 		ch := c.json[i]
 		switch ch {
 
@@ -240,6 +233,33 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 			case 't':
 				c.pushByte('\t')
 				break
+			case 'u':
+				p := []byte(c.json[i:])
+				r, v := getu4(p)
+				if v < 0xD800 || v > 0xDBFF {
+					if r < 0 {
+						return ParserInvalidStringChar
+					}
+					push4u(r, c)
+					i += 4
+				} else {
+					i += 6
+					p1 := []byte(c.json[i:])
+
+					_, v1 := getu4(p1)
+
+					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000
+					a := 0xF0 | ((v >> 18) & 0xFF)
+					c.pushByte(byte(a))
+					a = 0x80 | ((v >> 12) & 0x3F)
+					c.pushByte(byte(a))
+					a = 0x80 | ((v >> 6) & 0x3F)
+					c.pushByte(byte(a))
+					a = 0x80 | ((v) & 0x3F)
+					c.pushByte(byte(a))
+					i += 4
+				}
+
 			default:
 				return ParserInvalidStringEscape
 			}
