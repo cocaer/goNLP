@@ -69,7 +69,7 @@ func TestParserTrue(t *testing.T) {
 	testBase(jsonFALSE, v._type, t, "set fasle wrong")
 
 }
-
+*/
 func TestParserNumber(t *testing.T) {
 
 	testNumberEqual(t, "  223  ", 223)
@@ -81,7 +81,7 @@ func TestParserNumber(t *testing.T) {
 	testNumberEqual(t, "1e-10000", 0.0)
 	testNumberEqual(t, "1E+10", 1E+10)
 	testNumberEqual(t, "1E-10", 1E-10)
-
+	testNumberEqual(t, "1E-10", 1E-10)
 	testNumberInvaild(t, "inf", ParserInvalidValue)
 	testNumberInvaild(t, "+0", ParserInvalidValue)
 
@@ -110,7 +110,7 @@ func TestParserStack(t *testing.T) {
 		t.Error()
 	}
 
-}*/
+}
 
 func testNumberInvaild(t *testing.T, strNum string, s begoParserStatus) {
 	v, status := initAndParser(strNum)
@@ -132,7 +132,7 @@ func initAndParser(json string) (v begoValue, s begoParserStatus) {
 }
 
 func TestParserString(t *testing.T) {
-	testStringEqual(t, "", `""`)
+	/*testStringEqual(t, "", `""`)
 	testStringEqual(t, "\x30", "\"\x30\"")
 	testStringEqual(t, "abc", `"abc"`)
 	testStringEqual(t, "\\", `"\\"`)
@@ -143,7 +143,7 @@ func TestParserString(t *testing.T) {
 	testStringEqual(t, "json\n", `"json\n"`) // { "name" : "json\n"}
 
 	testParserMissQuotationMark(t)
-	testParserInvalidStringEscape(t)
+	testParserInvalidStringEscape(t)*/
 }
 
 func testParserMissQuotationMark(t *testing.T) {

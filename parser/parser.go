@@ -29,6 +29,8 @@ const (
 	ParserInvalidStringEscape //5
 	ParserMissQuotationMark
 	ParserInvalidStringChar
+	ParserInvalidUnicodeHex
+	ParserInvalidSurrogate
 )
 
 /* store info from parser*/
@@ -243,20 +245,19 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 					push4u(r, c)
 					i += 4
 				} else {
+					if len(c.json) <= 12 {
+						return ParserInvalidSurrogate
+					}
 					i += 6
 					p1 := []byte(c.json[i:])
 
 					_, v1 := getu4(p1)
 
-					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000
-					a := 0xF0 | ((v >> 18) & 0xFF)
-					c.pushByte(byte(a))
-					a = 0x80 | ((v >> 12) & 0x3F)
-					c.pushByte(byte(a))
-					a = 0x80 | ((v >> 6) & 0x3F)
-					c.pushByte(byte(a))
-					a = 0x80 | ((v) & 0x3F)
-					c.pushByte(byte(a))
+					if v1 < 0xDc00 || v1 > 0xDFFF {
+						return ParserInvalidSurrogate
+					}
+					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000 //it may be
+					push4u(rune(v), c)
 					i += 4
 				}
 
