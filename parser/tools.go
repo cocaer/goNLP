@@ -73,15 +73,15 @@ func isDigit1To9(ch byte) bool {
 	return false
 }
 
-type stack []byte
+type stack []interface{}
 
 func (c *context) pushByte(b byte) {
 	c.s = append(c.s, b)
 }
 
-func (c *context) pushBytes(b []byte) {
+/*func (c *context) pushBytes(b []byte) {
 	c.s = append(c.s, b...)
-}
+}*/
 
 func (c *context) popBytes(length int) []byte {
 	if length > len(c.s) {
@@ -89,7 +89,13 @@ func (c *context) popBytes(length int) []byte {
 	}
 	ret := c.s[len(c.s)-length:]
 	c.s = c.s[0 : len(c.s)-length]
-	return ret
+	buff := []byte{}
+	for _, e := range ret {
+		o, _ := e.(byte)
+		buff = append(buff, o)
+	}
+
+	return buff
 }
 
 func getu4(s []byte) (rune, uint64) {

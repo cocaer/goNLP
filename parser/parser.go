@@ -29,16 +29,19 @@ const (
 	ParserInvalidStringEscape //5
 	ParserMissQuotationMark
 	ParserInvalidStringChar
-	ParserInvalidUnicodeHex
-	ParserInvalidSurrogate
+	ParserInvalidUnicodeHex //6
+	ParserInvalidSurrogate  //7
 )
 
 /* store info from parser*/
+/*it's sad  that golang has no union type like C! */
+/*why dont use interface{}  because interface{} spends more space and time*/
+
 type begoValue struct {
-	_type jsonType
-	value float64 /*it's sad  that golang has no union type like C! */
-	str   string  /*why dont use interface{} */
-	len   int     /*because interface{} spends more space and time*/
+	_type jsonType   //store type
+	value float64    //store number in json
+	str   string     //store string in json
+	a     *begoValue //store array in json
 }
 
 /*our context to store json file string and other things*/
@@ -75,7 +78,7 @@ func (c *context) parserCommon(aimStr string, v *begoValue) begoParserStatus {
 	str := c.json
 	length := len(aimStr)
 	leng := len(str)
-	//if leng <= i+length-1 || strings.EqualFold(str[i:i+length-1], aimStr) {
+
 	if leng <= i+length-1 || str[i:i+length-1] == aimStr {
 		return ParserInvalidValue
 	}
@@ -137,9 +140,7 @@ func (c *context) parserNumber(v *begoValue) begoParserStatus {
 		}
 		for i = i + 1; i < leng && isDigit(json[i]); i++ {
 		}
-
 	}
-
 	value, erron := strconv.ParseFloat(c.json[c.index:i], 64)
 
 	//number is  to big
@@ -153,41 +154,6 @@ func (c *context) parserNumber(v *begoValue) begoParserStatus {
 
 	return ParserOk
 
-}
-
-func parser(v *begoValue, json string) begoParserStatus {
-	c := context{json: json, index: 0}
-	leng := len(json)
-	v._type = jsonNULL //initize the type
-
-	c.parserWhiteSpace()
-	ret := c.parserValue(v)
-	c.parserWhiteSpace()
-
-	if ret == ParserOk {
-		c.parserWhiteSpace()
-		if c.index < leng {
-			ret = ParserRootNotSingular
-		}
-	}
-
-	return ret
-}
-
-/*return the status of parser*/
-func (c *context) parserValue(v *begoValue) begoParserStatus {
-	switch ch := c.json[c.index]; ch {
-	case 'n':
-		return c.parserCommon("null", v)
-	case 't':
-		return c.parserCommon("true", v)
-	case 'f':
-		return c.parserCommon("false", v)
-	case '"':
-		return c.parserString(v)
-	default:
-		return c.parserNumber(v)
-	}
 }
 
 /*parser string*/
@@ -205,6 +171,7 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 			str := string(c.popBytes(size))
 			setString(v, str)
 			c.index = i + 1
+			c.s = nil // free the memory
 			return ParserOk
 
 		case '\\':
@@ -256,7 +223,7 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 					if v1 < 0xDc00 || v1 > 0xDFFF {
 						return ParserInvalidSurrogate
 					}
-					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000 //it may be
+					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000 //it may be confusing...just convert \uhhhh\uhhhh to U+hhhhh
 					push4u(rune(v), c)
 					i += 4
 				}
@@ -276,9 +243,69 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 				return ParserInvalidStringChar
 			}
 			c.pushByte(ch)
-
 		}
-
 	}
 	return ParserMissQuotationMark
+}
+
+func parser(v *begoValue, json string) begoParserStatus {
+	c := context{json: json, index: 0}
+	length := len(json)
+	v._type = jsonNULL //initize the type
+
+	c.parserWhiteSpace()
+	ret := c.parserValue(v)
+	c.parserWhiteSpace()
+
+	if ret == ParserOk {
+		c.parserWhiteSpace()
+		if c.index < length {
+			ret = ParserRootNotSingular
+		}
+	}
+
+	return ret
+}
+
+/*return the status of parser*/
+func (c *context) parserValue(v *begoValue) begoParserStatus {
+	switch ch := c.json[c.index]; ch {
+	case 'n':
+		return c.parserCommon("null", v)
+	case 't':
+		return c.parserCommon("true", v)
+	case 'f':
+		return c.parserCommon("false", v)
+	case '"':
+		return c.parserString(v)
+	case '[':
+		return c.parserArray(v)
+	default:
+		return c.parserNumber(v)
+	}
+}
+
+/*parser array*/
+func (c *context) parserArray(v *begoValue) begoParserStatus {
+
+	c.parserWhiteSpace() //strip the space behind [
+	c.index++
+	i := c.index
+
+	if c.json[i] == ']' {
+		c.index++
+		v._type = jsonARRAY
+		v.value = 0
+		return ParserOk
+	}
+
+	/*	for  {
+			e begoValue
+			if parserValue(c,&e) != ParserOk{
+			//c.push
+			}
+
+		}
+	*/
+	return ParserOk
 }

@@ -58,7 +58,8 @@ func TestParserFalse(t *testing.T) {
 
 	testBase(jsonFALSE, getJSONType(&v), t, "test parser false")
 }
-
+*/
+/*
 func TestParserTrue(t *testing.T) {
 	v, status := initAndParser("true")
 	testBase(ParserOk, status, t, "parser fail")
@@ -69,7 +70,7 @@ func TestParserTrue(t *testing.T) {
 	testBase(jsonFALSE, v._type, t, "set fasle wrong")
 
 }
-*/
+
 func TestParserNumber(t *testing.T) {
 
 	testNumberEqual(t, "  223  ", 223)
@@ -89,6 +90,7 @@ func TestParserNumber(t *testing.T) {
 	testNumberInvaild(t, ".123", ParserInvalidValue)
 	testNumberInvaild(t, "NAN", ParserInvalidValue)
 }
+*/
 
 func TestParserStack(t *testing.T) {
 	c := context{}
@@ -98,18 +100,9 @@ func TestParserStack(t *testing.T) {
 	c.pushByte('c')
 
 	v := c.popBytes(2)
-
-	if v[0] != 'b' && v[1] != 'c' {
+	if v[0] != 'b' {
 		t.Error()
 	}
-	c.pushBytes([]byte{'e', 'f'})
-
-	v = c.popBytes(2)
-
-	if v[0] != 'e' && v[1] != 'f' {
-		t.Error()
-	}
-
 }
 
 func testNumberInvaild(t *testing.T, strNum string, s begoParserStatus) {
@@ -125,14 +118,8 @@ func testNumberEqual(t *testing.T, strNum string, num float64) {
 	testBase(num, getNumber(&v), t, "test parser number")
 }
 
-func initAndParser(json string) (v begoValue, s begoParserStatus) {
-	v._type = jsonFALSE
-	s = parser(&v, json)
-	return v, s
-}
-
 func TestParserString(t *testing.T) {
-	/*testStringEqual(t, "", `""`)
+	testStringEqual(t, "", `""`)
 	testStringEqual(t, "\x30", "\"\x30\"")
 	testStringEqual(t, "abc", `"abc"`)
 	testStringEqual(t, "\\", `"\\"`)
@@ -143,7 +130,18 @@ func TestParserString(t *testing.T) {
 	testStringEqual(t, "json\n", `"json\n"`) // { "name" : "json\n"}
 
 	testParserMissQuotationMark(t)
-	testParserInvalidStringEscape(t)*/
+	testParserInvalidStringEscape(t)
+}
+
+func initAndParser(json string) (v begoValue, s begoParserStatus) {
+	v._type = jsonFALSE
+	s = parser(&v, json)
+	return v, s
+}
+
+func TestParserArray(t *testing.T) {
+	_, s := initAndParser("[]")
+	testBase(ParserOk, s, t, "parser Array")
 }
 
 func testParserMissQuotationMark(t *testing.T) {
@@ -162,7 +160,6 @@ func testParserInvalidStringEscape(t *testing.T) {
 func testStringEqual(t *testing.T, s1 string, s2 string) {
 	v, status := initAndParser(s2)
 	testBase(ParserOk, status, t, "parser string fail")
-	//t.Error(".....", v.str)
-	//t.Error(".....", s1)
+
 	testBase(s1, v.str, t, "parser string equal fail")
 }
