@@ -75,13 +75,30 @@ func isDigit1To9(ch byte) bool {
 
 type stack []interface{}
 
+//TODO
+//i will merge these stack method with interfaceP{}
 func (c *context) pushByte(b byte) {
 	c.s = append(c.s, b)
 }
 
-/*func (c *context) pushBytes(b []byte) {
-	c.s = append(c.s, b...)
-}*/
+func (c *context) pushValue(v begoValue) {
+	c.s = append(c.s, v)
+}
+
+func (c *context) popValues(length int) []begoValue {
+
+	if length > len(c.s) {
+		panic("pop number is bigger than size of stack")
+	}
+	ret := c.s[len(c.s)-length:]
+	c.s = c.s[0 : len(c.s)-length]
+	buff := []begoValue{}
+	for _, e := range ret {
+		o, _ := e.(begoValue)
+		buff = append(buff, o)
+	}
+	return buff
+}
 
 func (c *context) popBytes(length int) []byte {
 	if length > len(c.s) {
@@ -94,7 +111,6 @@ func (c *context) popBytes(length int) []byte {
 		o, _ := e.(byte)
 		buff = append(buff, o)
 	}
-
 	return buff
 }
 

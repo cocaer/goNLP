@@ -140,8 +140,19 @@ func initAndParser(json string) (v begoValue, s begoParserStatus) {
 }
 
 func TestParserArray(t *testing.T) {
-	_, s := initAndParser("[]")
+	v, s := initAndParser("[]")
 	testBase(ParserOk, s, t, "parser Array")
+	v, s = initAndParser(`[1234213,"324",["1",[2]]]`)
+
+	testBase("324", getArrayElem(&v, 1).str, t, "parser Array")
+	testBase(1234213.0, getArrayElem(&v, 0).value, t, "parser Array")
+	testBase(2.0, (*(*getArrayElem(&v, 2).a)[1].a)[0].value, t, "parser Array")
+
+	//t.Error((*(*getArrayElem(&v, 2).a)[1].a)[0])
+}
+
+func getArrayElem(v *begoValue, index int) (q begoValue) {
+	return (*(v.a))[index]
 }
 
 func testParserMissQuotationMark(t *testing.T) {

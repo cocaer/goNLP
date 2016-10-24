@@ -31,6 +31,7 @@ const (
 	ParserInvalidStringChar
 	ParserInvalidUnicodeHex //6
 	ParserInvalidSurrogate  //7
+	ParserMissCommaOrSquareBracket
 )
 
 /* store info from parser*/
@@ -38,10 +39,10 @@ const (
 /*why dont use interface{}  because interface{} spends more space and time*/
 
 type begoValue struct {
-	_type jsonType   //store type
-	value float64    //store number in json
-	str   string     //store string in json
-	a     *begoValue //store array in json
+	_type jsonType     //store type
+	value float64      //store number in json
+	str   string       //store string in json
+	a     *[]begoValue //store array in json
 }
 
 /*our context to store json file string and other things*/
@@ -171,7 +172,8 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 			str := string(c.popBytes(size))
 			setString(v, str)
 			c.index = i + 1
-			c.s = nil // free the memory
+			//c.s = nil    >_< this is a bug !dont free the memory
+			//when parsering array, also use this stack
 			return ParserOk
 
 		case '\\':
@@ -290,22 +292,46 @@ func (c *context) parserArray(v *begoValue) begoParserStatus {
 
 	c.parserWhiteSpace() //strip the space behind [
 	c.index++
-	i := c.index
 
-	if c.json[i] == ']' {
+	if c.json[c.index] == ']' {
 		c.index++
 		v._type = jsonARRAY
-		v.value = 0
+		v.value = 0 //use value to count the elem in array
 		return ParserOk
 	}
 
-	/*	for  {
-			e begoValue
-			if parserValue(c,&e) != ParserOk{
-			//c.push
-			}
+	for {
+		e := begoValue{}
 
+		if c.parserValue(&e) != ParserOk {
+			break
 		}
-	*/
+
+		c.pushValue(e)
+		c.parserWhiteSpace()
+
+		v.value++ //elem +1
+
+		if c.json[c.index] == ',' {
+			c.index++
+			c.parserWhiteSpace()
+		} else if c.json[c.index] == ']' {
+
+			c.index++
+			v._type = jsonARRAY
+			//copyStackToValue(c, v) //将暂存区的东西放到v.a中
+			tmp := make([]begoValue, int(v.value), int(v.value))
+			copy(tmp, c.popValues(int(v.value))[:])
+			v.a = &tmp
+			return ParserOk
+		} else {
+			return ParserMissCommaOrSquareBracket
+		}
+
+	}
+
 	return ParserOk
+}
+
+func copyStackToValue(c *context, v *begoValue) {
 }
