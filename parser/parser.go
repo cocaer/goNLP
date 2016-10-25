@@ -29,8 +29,8 @@ const (
 	ParserInvalidStringEscape //5
 	ParserMissQuotationMark
 	ParserInvalidStringChar
-	ParserInvalidUnicodeHex //6
-	ParserInvalidSurrogate  //7
+	ParserInvalidUnicodeHex
+	ParserInvalidSurrogate
 	ParserMissCommaOrSquareBracket
 )
 
@@ -75,15 +75,13 @@ func (c *context) parserWhiteSpace() {
 
 /*parser true false  null*/
 func (c *context) parserCommon(aimStr string, v *begoValue) begoParserStatus {
-	i := c.index
-	str := c.json
-	length := len(aimStr)
-	leng := len(str)
-
-	if leng <= i+length-1 || str[i:i+length-1] == aimStr {
+	//null  nul   length 4  leng 3
+	str := c.json[c.index:]
+	l := len(aimStr)
+	if len(str) < l || str[0:l] != aimStr {
 		return ParserInvalidValue
 	}
-	c.index += length
+	c.index += l
 
 	if aimStr == "null" {
 
@@ -289,21 +287,21 @@ func (c *context) parserValue(v *begoValue) begoParserStatus {
 
 /*parser array*/
 func (c *context) parserArray(v *begoValue) begoParserStatus {
-
-	c.parserWhiteSpace() //strip the space behind [
+	rval := ParserMissCommaOrSquareBracket
 	c.index++
-
-	if c.json[c.index] == ']' {
+	c.parserWhiteSpace() //strip the space behind [
+	if c.index < len(c.json) && c.json[c.index] == ']' {
 		c.index++
 		v._type = jsonARRAY
 		v.value = 0 //use value to count the elem in array
 		return ParserOk
 	}
 
-	for {
+	for c.index < len(c.json) {
 		e := begoValue{}
-
-		if c.parserValue(&e) != ParserOk {
+		k := c.parserValue(&e)
+		if k != ParserOk {
+			rval = k
 			break
 		}
 
@@ -312,7 +310,10 @@ func (c *context) parserArray(v *begoValue) begoParserStatus {
 
 		v.value++ //elem +1
 
-		if c.json[c.index] == ',' {
+		if c.index >= len(c.json) {
+			rval = ParserMissCommaOrSquareBracket
+			break
+		} else if c.json[c.index] == ',' {
 			c.index++
 			c.parserWhiteSpace()
 		} else if c.json[c.index] == ']' {
@@ -324,14 +325,9 @@ func (c *context) parserArray(v *begoValue) begoParserStatus {
 			copy(tmp, c.popValues(int(v.value))[:])
 			v.a = &tmp
 			return ParserOk
-		} else {
-			return ParserMissCommaOrSquareBracket
 		}
 
 	}
 
-	return ParserOk
-}
-
-func copyStackToValue(c *context, v *begoValue) {
+	return rval
 }

@@ -19,14 +19,33 @@ func testBase(except interface{}, actual interface{}, t *testing.T, msg string) 
 	}
 }
 
-/*
 func TestParserNull(t *testing.T) {
 	var v begoValue
 	var status begoParserStatus
 	setBoolen(&v, false)
 	v, status = initAndParser("null")
-	testBase(ParserOk, status, t, "parser fail")
+	//t.Error("!!!!!!!!!!!!", status)
+	testBase(ParserOk, status, t, "parser fail!!!!!!!!")
 	testBase(jsonNULL, getJSONType(&v), t, "test parser null")
+}
+
+func TestParserFalse(t *testing.T) {
+
+	v, status := initAndParser("false")
+	testBase(ParserOk, status, t, "parser fail")
+
+	testBase(jsonFALSE, getJSONType(&v), t, "test parser false")
+}
+
+func TestParserTrue(t *testing.T) {
+	v, status := initAndParser("true")
+	testBase(ParserOk, status, t, "parser fail")
+
+	testBase(jsonTRUE, getJSONType(&v), t, "test parser true")
+	testBase(true, getBoolen(&v), t, "get true wrong")
+	setBoolen(&v, false)
+	testBase(jsonFALSE, v._type, t, "set fasle wrong")
+
 }
 
 func TestParserInvalid(t *testing.T) {
@@ -51,26 +70,6 @@ func TestParserRootNotSingular(t *testing.T) {
 
 }
 
-func TestParserFalse(t *testing.T) {
-
-	v, status := initAndParser("false")
-	testBase(ParserOk, status, t, "parser fail")
-
-	testBase(jsonFALSE, getJSONType(&v), t, "test parser false")
-}
-*/
-/*
-func TestParserTrue(t *testing.T) {
-	v, status := initAndParser("true")
-	testBase(ParserOk, status, t, "parser fail")
-
-	testBase(jsonTRUE, getJSONType(&v), t, "test parser true")
-	testBase(true, getBoolen(&v), t, "get true wrong")
-	setBoolen(&v, false)
-	testBase(jsonFALSE, v._type, t, "set fasle wrong")
-
-}
-
 func TestParserNumber(t *testing.T) {
 
 	testNumberEqual(t, "  223  ", 223)
@@ -90,8 +89,8 @@ func TestParserNumber(t *testing.T) {
 	testNumberInvaild(t, ".123", ParserInvalidValue)
 	testNumberInvaild(t, "NAN", ParserInvalidValue)
 }
-*/
 
+/*
 func TestParserStack(t *testing.T) {
 	c := context{}
 
@@ -103,7 +102,7 @@ func TestParserStack(t *testing.T) {
 	if v[0] != 'b' {
 		t.Error()
 	}
-}
+}*/
 
 func testNumberInvaild(t *testing.T, strNum string, s begoParserStatus) {
 	v, status := initAndParser(strNum)
@@ -142,17 +141,21 @@ func initAndParser(json string) (v begoValue, s begoParserStatus) {
 func TestParserArray(t *testing.T) {
 	v, s := initAndParser("[]")
 	testBase(ParserOk, s, t, "parser Array")
-	v, s = initAndParser(`[1234213,"324",["1",[2]]]`)
+	v, s = initAndParser(`[1234213,"324",["  1  ",[2  ,"123"]]]`)
 
-	testBase("324", getArrayElem(&v, 1).str, t, "parser Array")
-	testBase(1234213.0, getArrayElem(&v, 0).value, t, "parser Array")
-	testBase(2.0, (*(*getArrayElem(&v, 2).a)[1].a)[0].value, t, "parser Array")
+	testBase("324", (*(v.a))[1].str, t, "parser Array")
+	testBase(1234213.0, (*(v.a))[0].value, t, "parser Array")
+	testBase("123", (*(*((*(v.a))[2]).a)[1].a)[1].str, t, "parser Array")
 
-	//t.Error((*(*getArrayElem(&v, 2).a)[1].a)[0])
-}
+	_, s = initAndParser(`[nul`)
+	testBase(ParserInvalidValue, s, t, "parser array")
+	_, s = initAndParser(`[nul`)
+	testBase(ParserInvalidValue, s, t, "parser array")
+	_, s = initAndParser(`[null`)
+	testBase(ParserMissCommaOrSquareBracket, s, t, "parser array")
+	_, s = initAndParser(`[null,[1,[2]]`)
+	testBase(ParserMissCommaOrSquareBracket, s, t, "parser array")
 
-func getArrayElem(v *begoValue, index int) (q begoValue) {
-	return (*(v.a))[index]
 }
 
 func testParserMissQuotationMark(t *testing.T) {
