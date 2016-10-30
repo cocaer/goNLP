@@ -28,10 +28,13 @@ const (
 	ParserNumberTooBig
 	ParserInvalidStringEscape //5
 	ParserMissQuotationMark
-	ParserInvalidStringChar
+	ParserInvalidStringChar //7
 	ParserInvalidUnicodeHex
-	ParserInvalidSurrogate
+	ParserInvalidSurrogate //9
 	ParserMissCommaOrSquareBracket
+	ParserMissKey                   //11
+	ParserMissColon                 //12
+	ParsaerMiseeCommaOrCurlyBracket //13
 )
 
 /* store info from parser*/
@@ -42,7 +45,9 @@ type begoValue struct {
 	_type jsonType     //store type
 	value float64      //store number in json
 	str   string       //store string in json
-	a     *[]begoValue //store array in json
+	a     *[]begoValue //store array in json, value will be used as size of array
+	//it also stores object in json, the value will be  also used as size of object, and
+	//string will be used as key name
 }
 
 /*our context to store json file string and other things*/
@@ -223,7 +228,8 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 					if v1 < 0xDc00 || v1 > 0xDFFF {
 						return ParserInvalidSurrogate
 					}
-					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000 //it may be confusing...just convert \uhhhh\uhhhh to U+hhhhh
+					//it may be confusing...just convert \uhhhh\uhhhh to U+hhhhh
+					v = (((v - 0xD800) << 10) | (v1 - 0xDC00)) + 0x10000
 					push4u(rune(v), c)
 					i += 4
 				}
@@ -246,43 +252,6 @@ func (c *context) parserString(v *begoValue) begoParserStatus {
 		}
 	}
 	return ParserMissQuotationMark
-}
-
-func parser(v *begoValue, json string) begoParserStatus {
-	c := context{json: json, index: 0}
-	length := len(json)
-	v._type = jsonNULL //initize the type
-
-	c.parserWhiteSpace()
-	ret := c.parserValue(v)
-	c.parserWhiteSpace()
-
-	if ret == ParserOk {
-		c.parserWhiteSpace()
-		if c.index < length {
-			ret = ParserRootNotSingular
-		}
-	}
-
-	return ret
-}
-
-/*return the status of parser*/
-func (c *context) parserValue(v *begoValue) begoParserStatus {
-	switch ch := c.json[c.index]; ch {
-	case 'n':
-		return c.parserCommon("null", v)
-	case 't':
-		return c.parserCommon("true", v)
-	case 'f':
-		return c.parserCommon("false", v)
-	case '"':
-		return c.parserString(v)
-	case '[':
-		return c.parserArray(v)
-	default:
-		return c.parserNumber(v)
-	}
 }
 
 /*parser array*/
@@ -320,9 +289,113 @@ func (c *context) parserArray(v *begoValue) begoParserStatus {
 
 			c.index++
 			v._type = jsonARRAY
-			//copyStackToValue(c, v) //将暂存区的东西放到v.a中
 			tmp := make([]begoValue, int(v.value), int(v.value))
 			copy(tmp, c.popValues(int(v.value))[:])
+			v.a = &tmp
+			return ParserOk
+		}
+
+	}
+
+	return rval
+}
+
+func parser(v *begoValue, json string) begoParserStatus {
+	c := context{json: json, index: 0}
+	length := len(json)
+	v._type = jsonNULL //initize the type
+
+	c.parserWhiteSpace()
+	ret := c.parserValue(v)
+	c.parserWhiteSpace()
+
+	if ret == ParserOk {
+		c.parserWhiteSpace()
+		if c.index < length {
+			ret = ParserRootNotSingular
+		}
+	}
+
+	return ret
+}
+
+/*return the status of parser*/
+func (c *context) parserValue(v *begoValue) begoParserStatus {
+	switch ch := c.json[c.index]; ch {
+	case 'n':
+		return c.parserCommon("null", v)
+	case 't':
+		return c.parserCommon("true", v)
+	case 'f':
+		return c.parserCommon("false", v)
+	case '"':
+		return c.parserString(v)
+	case '[':
+		return c.parserArray(v)
+	case '{':
+		return c.parserObject(v)
+	default:
+		return c.parserNumber(v)
+	}
+}
+
+func (c *context) parserObject(v *begoValue) begoParserStatus {
+	rval := ParserMissCommaOrSquareBracket
+	total := len(c.json)
+	c.index++
+	c.parserWhiteSpace()
+	if c.json[c.index] == '}' {
+		c.index++
+		v._type = jsonOBJECT
+		return ParserOk
+	}
+
+	for c.index < total {
+		e := begoValue{}
+		k := c.parserValue(&e)
+
+		if k != ParserOk {
+			rval = ParserMissKey
+			return rval
+		}
+
+		c.pushValue(e)
+		c.parserWhiteSpace()
+		if c.index >= total || c.json[c.index] != ':' {
+			rval = ParserMissColon
+			return rval
+		}
+		c.index++
+		c.parserWhiteSpace()
+
+		e = begoValue{} //parser value
+		k = c.parserValue(&e)
+
+		if k != ParserOk {
+			rval = k
+			return rval
+		}
+
+		c.pushValue(e)
+		v.value++
+		c.parserWhiteSpace()
+
+		if c.index >= total {
+			rval = ParserMissCommaOrSquareBracket
+			return rval
+		}
+
+		switch c.json[c.index] {
+		case ',':
+			c.index++
+			c.parserWhiteSpace()
+			break
+		case '}':
+			c.index++
+			v._type = jsonOBJECT
+
+			tmp := make([]begoValue, int(v.value)*2, int(v.value)*2)
+			copy(tmp, c.popValues(int(v.value) * 2)[:])
 			v.a = &tmp
 			return ParserOk
 		}
