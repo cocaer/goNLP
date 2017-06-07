@@ -14,10 +14,10 @@ type Feature struct {
 //BulidMaterix 求出
 //TransferMatrix ：转移矩阵 4*4
 //				      B   M   E  S  ALL
-//				  B   *   *   *  *  *
-//				  M   *   *   *  *  *
-//			      E   *   *   *  *  *
-//				  S   *   *   *  *  *
+//                B   *   *   *  *  *
+//                M   *   *   *  *  *
+//                E   *   *   *  *  *
+//                S   *   *   *  *  *
 func BulidTransferMaterix(path string) {
 
 	var transferMaterix [SUM_STATUS][SUM_STATUS + 1]int64
