@@ -13,7 +13,7 @@ type Feature struct {
 
 //BulidMaterix 求出
 //TransferMatrix ：转移矩阵 4*4
-//				      B   M   E  S  ALL
+//                    B   M   E  S  ALL
 //                B   *   *   *  *  *
 //                M   *   *   *  *  *
 //                E   *   *   *  *  *
