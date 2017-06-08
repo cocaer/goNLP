@@ -6,5 +6,5 @@ import (
 
 func main() {
 
-	hmm.BulidTransferMaterix("./data/bmes.txt")
+	hmm.BulidEmitProMaterix("./data/bmes.txt")
 }
