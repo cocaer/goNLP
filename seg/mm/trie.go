@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"unicode"
+	seg "github.com/cocaer/goNLP/seg/config"
 
-	"../config"
+	"unicode"
 )
 
 var isLoadDictFlag = false

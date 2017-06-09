@@ -1,7 +1,8 @@
 package seg
 
+
 var SegConfig = map[string]string{
-	"mmDictPath": "/home/begosu/github/begojson/data/mmdict.txt",
-	"hmmTrainingFile":"/home/begosu/github/begojson/data/bmes.txt",
-	"hmmModelFile":"/home/begosu/github/begojson/data/hmmmodel.txt",
+	"mmDictPath": "/home/begosu/gocode/src/github.com/cocaer/goNLP/data/mmdict.txt",
+	"hmmTrainingFile":"/home/begosu/gocode/src/github.com/cocaer/goNLP/data/bmes.txt",
+	"hmmModelFile":"/home/begosu/gocode/src/github.com/cocaer/goNLP/data/hmmmodel.txt",
 }

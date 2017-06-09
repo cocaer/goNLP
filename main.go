@@ -1,10 +1,8 @@
 package main
 
-import (
-	"./seg/hmm"
-)
+import "github.com/cocaer/goNLP/seg/hmm"
 
 func main() {
 
-	hmm.BulidEmitProMaterix("./data/bmes.txt")
+	hmm.HmmSaveTrainingFile()
 }
