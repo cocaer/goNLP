@@ -4,13 +4,16 @@ import "os"
 import "fmt"
 import "bufio"
 import "strings"
-
+import "math"
+import "../config"
 //Feature 一个汉字一个Feature
 type Feature struct {
 	Count   int
 	BEMS    [SUM_STATUS]int
 	BEMSPro [SUM_STATUS]float64
 }
+
+
 
 var ma = map[int]int{
 	'B': 0,
@@ -19,10 +22,12 @@ var ma = map[int]int{
 	'S': 3,
 }
 
+var BMESCount[4] float64
+
 //BulidTransferProMaterix 	  求出
 //TransferMatrix ：转移矩阵 4*4
 //                    B   M   E  S  ALL
-//                B   *   *   *  *  *
+//                B   *   *   *  *  *    (取对数)
 //                M   *   *   *  *  *
 //                E   *   *   *  *  *
 //                S   *   *   *  *  *
@@ -53,7 +58,7 @@ func BulidTransferProMaterix(path string) [SUM_STATUS][SUM_STATUS]float64 {
 
 	for i := 0; i < SUM_STATUS; i++ {
 		for j := 0; j < SUM_STATUS; j++ {
-			transferProMaterix[i][j] = float64(transferMaterix[i][j]) / float64(transferMaterix[i][SUM_STATUS])
+			transferProMaterix[i][j] =math.Log(float64(transferMaterix[i][j]) / float64(transferMaterix[i][SUM_STATUS]))
 		}
 	}
 
@@ -64,11 +69,18 @@ func BulidTransferProMaterix(path string) [SUM_STATUS][SUM_STATUS]float64 {
 }
 
 //BulidEmitProMaterix 求出
-//EmitProMaterix : 存储结构为map
-//				   key:汉字
-//				   value:Feature结构体
-func BulidEmitProMaterix(path string) map[rune]*Feature {
-	var EmitPropMaterix = make(map[rune]*Feature)
+//EmitProMaterix : 存储结构为四维数组 类型为map[rune]float64
+//				   B   '汉字':probalitity(取对数)
+//				   M				   
+//                 E
+//				   S	
+func BulidEmitProMaterix(path string) *[SUM_STATUS]map[rune]float64 {
+	var ProMaterix = make(map[rune]*Feature)
+	var EmitProMaterix  [SUM_STATUS]map[rune]float64
+	for i:=0;i<SUM_STATUS;i++{
+		EmitProMaterix[i]=make(map[rune]float64)
+	}
+
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -84,23 +96,54 @@ func BulidEmitProMaterix(path string) map[rune]*Feature {
 			continue
 		}
 		r := []rune(words[0])[0]
-		if _, ok := EmitPropMaterix[r]; !ok {
-			EmitPropMaterix[r] = &Feature{Count: 1}
+		if _, ok := ProMaterix[r]; !ok {
+			status := int(words[1][0])						
+			ProMaterix[r] = &Feature{Count: 1}
+			ProMaterix[r].BEMS[ma[status]]++
+			BMESCount[ma[status]]++
 		} else {
 			status := int(words[1][0])
-			EmitPropMaterix[r].Count++
-			EmitPropMaterix[r].BEMS[ma[status]]++
+			ProMaterix[r].Count++
+			ProMaterix[r].BEMS[ma[status]]++
+			BMESCount[ma[status]]++
 		}
 	}
 
-	for k := range EmitPropMaterix {
+	for k := range ProMaterix {
 		for i := 0; i < 4; i++ {
-			EmitPropMaterix[k].BEMSPro[i] = float64(EmitPropMaterix[k].BEMS[i]) / float64(EmitPropMaterix[k].Count)
+			EmitProMaterix[i][k] = math.Log(float64(ProMaterix[k].BEMS[i]+1)/ float64(BMESCount[i]))
 		}
 	}
 
+	// for k:=range EmitProMaterix[1]{
+	// 	fmt.Printf("%c:%f\n",k,EmitProMaterix[1][k])
+	// }
+	r :='小'
+	fmt.Println(EmitProMaterix[0][r],EmitProMaterix[1][r],EmitProMaterix[2][r],EmitProMaterix[3][r])
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Read error in BulidEmitProMaterix")
 	}
-	return EmitPropMaterix
+	return &EmitProMaterix
+}
+
+
+func HmmSaveTrainingFile(){
+	TransferMatrix := BulidTransferProMaterix(seg.SegConfig["hmmTrainingFile"])
+	//EmitProMaterix := BulidEmitProMaterix(seg.SegConfig["hmmTrainingFile"])
+	outFile,err :=os.Create(seg.SegConfig["hmmModelFile"])
+
+	defer outFile.Close()
+	if err!=nil{
+		fmt.Println("Create Hmm Training File Failed");
+	}
+
+	outFile.WriteString("B           M                 E              S\n")
+	for i:=0;i<SUM_STATUS;i++{
+		for j:=0;j<SUM_STATUS;j++{
+			s:=fmt.Sprintf("%f ",TransferMatrix[i][j])
+			outFile.WriteString(s)
+		}
+		outFile.WriteString("\n")
+	}
+	
 }
