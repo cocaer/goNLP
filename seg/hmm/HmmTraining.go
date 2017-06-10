@@ -10,7 +10,7 @@ import (
 	seg "github.com/cocaer/goNLP/seg/config"
 )
 
-const IMPOSSIBLEPRO  = -10000
+const IMPOSSIBLEPRO  = -3.14e+10
 //Feature 一个汉字一个Feature
 type Feature struct {
 	Count   int
@@ -141,7 +141,7 @@ func HmmSaveTrainingFile() {
 	outFile.WriteString("package data \n" +
 			"const SUM_STATUS  =4\n" +
 			"var StartProMaterix =[SUM_STATUS]float64{" +
-			"-0.26268660809250016 -3.14e+100 -3.14e+100 -1.4652633398537678" +
+			"-0.26268660809250016, -3.14e+10 ,-3.14e+10, -1.4652633398537678" +
 			"}\n")
 
 	outFile.WriteString("var TransferMatrix  =[SUM_STATUS][SUM_STATUS]float64{")
@@ -157,13 +157,12 @@ func HmmSaveTrainingFile() {
 	outFile.WriteString("}\n")
 
 	outFile.WriteString("var EmitProMaterix  =" +
-			"&[SUM_STATUS]map[rune]float64{")
+			                 "&[SUM_STATUS]map[rune]float64{")
 
 	for i:=0;i<SUM_STATUS;i++{
 		outFile.WriteString("{\n")
-		spaceStr := "                     "
 		for k:=range EmitProMaterix[i]{
-			s:=fmt.Sprintf("%s%s'%c':%f,\n",spaceStr,spaceStr,k,EmitProMaterix[i][k])
+			s:=fmt.Sprintf("'%c':%f,",k,EmitProMaterix[i][k])
 			outFile.WriteString(s)
 		}
 		outFile.WriteString("},\n")
