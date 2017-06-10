@@ -10,6 +10,7 @@ import (
 	seg "github.com/cocaer/goNLP/seg/config"
 )
 
+const IMPOSSIBLEPRO  = -10000
 //Feature 一个汉字一个Feature
 type Feature struct {
 	Count   int
@@ -60,6 +61,11 @@ func BulidTransferProMaterix(path string) [SUM_STATUS][SUM_STATUS]float64 {
 
 	for i := 0; i < SUM_STATUS; i++ {
 		for j := 0; j < SUM_STATUS; j++ {
+
+			if transferMaterix[i][j]==0{
+				transferProMaterix[i][j]=IMPOSSIBLEPRO
+				continue
+			}
 			transferProMaterix[i][j] = math.Log(float64(transferMaterix[i][j]) / float64(transferMaterix[i][SUM_STATUS]))
 		}
 	}
@@ -131,30 +137,37 @@ func HmmSaveTrainingFile() {
 	if err != nil {
 		fmt.Println("Create Hmm Training File Failed")
 	}
-	outFile.WriteString("B           M                 E              S\n")
 
-	outFile.WriteString("##prob_start\n")
-	outFile.WriteString("-0.26268660809250016 -3.14e+100 -3.14e+100 -1.4652633398537678\n")
+	outFile.WriteString("package data \n" +
+			"const SUM_STATUS  =4\n" +
+			"var StartProMaterix =[SUM_STATUS]float64{" +
+			"-0.26268660809250016 -3.14e+100 -3.14e+100 -1.4652633398537678" +
+			"}\n")
 
-	outFile.WriteString("##TransferProMatrix\n")
-	for i := 0; i < SUM_STATUS; i++ {
-		for j := 0; j < SUM_STATUS; j++ {
-			s := fmt.Sprintf("%f ", TransferMatrix[i][j])
-			outFile.WriteString(s)
-		}
-		outFile.WriteString("\n")
+	outFile.WriteString("var TransferMatrix  =[SUM_STATUS][SUM_STATUS]float64{")
+
+	for i:=0;i<SUM_STATUS ;i++{
+		var s string  = fmt.Sprintf("{%f,%f,%f,%f}",TransferMatrix[i][0],
+			                                               TransferMatrix[i][1],
+			                                               TransferMatrix[i][2],
+			                                               TransferMatrix[i][3])
+		outFile.WriteString(s)
+		outFile.WriteString(",")
 	}
+	outFile.WriteString("}\n")
 
-	outFile.WriteString("##EmitProMaterix\n")
-
+	outFile.WriteString("var EmitProMaterix  =" +
+			"&[SUM_STATUS]map[rune]float64{")
 
 	for i:=0;i<SUM_STATUS;i++{
-
-		for k:=range  EmitProMaterix[i]{
-			outFile.WriteString(string(k)+":")
-			s:=fmt.Sprintf("%f",EmitProMaterix[i][k])
-			outFile.WriteString(s+" ")
+		outFile.WriteString("{\n")
+		spaceStr := "                     "
+		for k:=range EmitProMaterix[i]{
+			s:=fmt.Sprintf("%s%s'%c':%f,\n",spaceStr,spaceStr,k,EmitProMaterix[i][k])
+			outFile.WriteString(s)
 		}
-		outFile.WriteString("\n")
+		outFile.WriteString("},\n")
 	}
+	outFile.WriteString("}")
+
 }
