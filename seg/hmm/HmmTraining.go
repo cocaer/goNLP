@@ -10,7 +10,8 @@ import (
 	seg "github.com/cocaer/goNLP/seg/config"
 )
 
-const IMPOSSIBLEPRO  = -3.14e+10
+const IMPOSSIBLEPRO = -3.14e+10
+
 //Feature 一个汉字一个Feature
 type Feature struct {
 	Count   int
@@ -23,6 +24,13 @@ var ma = map[int]int{
 	'M': 1,
 	'E': 2,
 	'S': 3,
+}
+
+var am = map[int]rune{
+	0: 'B',
+	1: 'M',
+	2: 'E',
+	3: 'S',
 }
 
 var BMESCount [4]float64
@@ -45,25 +53,25 @@ func BulidTransferProMaterix(path string) [SUM_STATUS][SUM_STATUS]float64 {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	preStatus := 0
+	preStatus := -1
 	for scanner.Scan() {
 		s := scanner.Text()
 		status := s[len(s)-1]
-		if preStatus == 0 {
+		transferMaterix[ma[int(status)]][SUM_STATUS]++
+		if preStatus == -1 {
 			preStatus = int(status)
 			continue
 		} else {
 			transferMaterix[ma[preStatus]][ma[int(status)]]++
 			preStatus = int(status)
 		}
-		transferMaterix[ma[int(status)]][SUM_STATUS]++
 	}
 
 	for i := 0; i < SUM_STATUS; i++ {
 		for j := 0; j < SUM_STATUS; j++ {
 
-			if transferMaterix[i][j]==0{
-				transferProMaterix[i][j]=IMPOSSIBLEPRO
+			if transferMaterix[i][j] == 0 {
+				transferProMaterix[i][j] = IMPOSSIBLEPRO
 				continue
 			}
 			transferProMaterix[i][j] = math.Log(float64(transferMaterix[i][j]) / float64(transferMaterix[i][SUM_STATUS]))
@@ -139,30 +147,30 @@ func HmmSaveTrainingFile() {
 	}
 
 	outFile.WriteString("package data \n" +
-			"const SUM_STATUS  =4\n" +
-			"var StartProMaterix =[SUM_STATUS]float64{" +
-			"-0.26268660809250016, -3.14e+10 ,-3.14e+10, -1.4652633398537678" +
-			"}\n")
+		"const SUM_STATUS  =4\n" +
+		"var StartProMaterix =[SUM_STATUS]float64{" +
+		"-0.26268660809250016, -3.14e+10 ,-3.14e+10, -1.4652633398537678" +
+		"}\n")
 
 	outFile.WriteString("var TransferMatrix  =[SUM_STATUS][SUM_STATUS]float64{")
 
-	for i:=0;i<SUM_STATUS ;i++{
-		var s string  = fmt.Sprintf("{%f,%f,%f,%f}",TransferMatrix[i][0],
-			                                               TransferMatrix[i][1],
-			                                               TransferMatrix[i][2],
-			                                               TransferMatrix[i][3])
+	for i := 0; i < SUM_STATUS; i++ {
+		var s string = fmt.Sprintf("{%f,%f,%f,%f}", TransferMatrix[i][0],
+			TransferMatrix[i][1],
+			TransferMatrix[i][2],
+			TransferMatrix[i][3])
 		outFile.WriteString(s)
 		outFile.WriteString(",")
 	}
 	outFile.WriteString("}\n")
 
 	outFile.WriteString("var EmitProMaterix  =" +
-			                 "&[SUM_STATUS]map[rune]float64{")
+		"&[SUM_STATUS]map[rune]float64{")
 
-	for i:=0;i<SUM_STATUS;i++{
+	for i := 0; i < SUM_STATUS; i++ {
 		outFile.WriteString("{\n")
-		for k:=range EmitProMaterix[i]{
-			s:=fmt.Sprintf("'%c':%f,",k,EmitProMaterix[i][k])
+		for k := range EmitProMaterix[i] {
+			s := fmt.Sprintf("'%c':%f,\n", k, EmitProMaterix[i][k])
 			outFile.WriteString(s)
 		}
 		outFile.WriteString("},\n")
