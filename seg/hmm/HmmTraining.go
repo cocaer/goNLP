@@ -126,7 +126,7 @@ func BulidEmitProMaterix(path string) *[SUM_STATUS]map[rune]float64 {
 
 	for k := range ProMaterix {
 		for i := 0; i < 4; i++ {
-			EmitProMaterix[i][k] = math.Log(float64(ProMaterix[k].BEMS[i]+1) / float64(BMESCount[i]))
+			EmitProMaterix[i][k] = math.Log((float64(ProMaterix[k].BEMS[i] + 1)) / float64(BMESCount[i]))
 		}
 	}
 
@@ -155,7 +155,7 @@ func HmmSaveTrainingFile() {
 	outFile.WriteString("var TransferMatrix  =[SUM_STATUS][SUM_STATUS]float64{")
 
 	for i := 0; i < SUM_STATUS; i++ {
-		var s string = fmt.Sprintf("{%f,%f,%f,%f}", TransferMatrix[i][0],
+		var s = fmt.Sprintf("{%f,%f,%f,%f}", TransferMatrix[i][0],
 			TransferMatrix[i][1],
 			TransferMatrix[i][2],
 			TransferMatrix[i][3])
