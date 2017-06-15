@@ -56,7 +56,7 @@ func BulidTransferProMaterix(path string) [SUM_STATUS][SUM_STATUS]float64 {
 	preStatus := -1
 	for scanner.Scan() {
 		s := scanner.Text()
-		status := s[len(s)-1]
+		status := strings.Fields(s)[1][0] //s[len(s)-1]
 		transferMaterix[ma[int(status)]][SUM_STATUS]++
 		if preStatus == -1 {
 			preStatus = int(status)

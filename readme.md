@@ -8,11 +8,12 @@
 package main
 
 import "github.com/cocaer/goNLP/seg/hmm"
-
+import "fmt"
 func main() {
     m := hmm.NewModel()
-    m.Cut("他来到了网易杭研大厦")
+    fmt.Println(m.Cut("王者荣耀是一款十分优秀的手游，最高同时两百万人在线。PS：我瞎说的"))
 }
+
 ```
 
 ``` txt
