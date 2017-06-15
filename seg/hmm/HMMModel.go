@@ -1,12 +1,13 @@
 package hmm
 
 import "github.com/cocaer/goNLP/data"
-import "fmt"
+
+import "unicode"
 
 const (
 	B = iota
-	E
 	M
+	E
 	S
 	SUM_STATUS
 )
@@ -73,13 +74,15 @@ func (self Model) Cut(s string) []string {
 	ssrune := []rune(s)
 	begin := 0
 	end := 0
+	processDigital(status, s)
+	processLetter(status, s)
 	for end < len(ssrune) {
-		if status[begin] == 3 {
+		if status[begin] == S {
 			result = append(result, string(ssrune[begin]))
 			begin++
 			end++
 		} else {
-			for end < len(ssrune) && status[end] != 2 {
+			for end < len(ssrune) && status[end] != E {
 				end++
 			}
 			end++
@@ -88,8 +91,56 @@ func (self Model) Cut(s string) []string {
 
 		}
 	}
-	fmt.Println(result)
 	return result
+}
+
+func isLetter(r rune) bool {
+	flag := false
+	if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+		flag = true
+	}
+	return flag
+}
+
+func processLetter(status []int, s string) {
+	ssrune := []rune(s)
+	var i = 0
+	for i < len(ssrune) {
+		if isLetter(ssrune[i]) {
+			status[i] = B
+			i++
+			for i < len(ssrune) && isLetter(ssrune[i]) {
+				status[i] = M
+				i++
+			}
+			if i < len(ssrune) {
+				status[i-1] = E
+			} else if isLetter(ssrune[i-1]) {
+				status[i-1] = E
+			}
+		}
+		i++
+	}
+}
+func processDigital(status []int, s string) {
+	ssrune := []rune(s)
+	var i = 0
+	for i < len(ssrune) {
+		if unicode.IsDigit(ssrune[i]) {
+			status[i] = B
+			i++
+			for i < len(ssrune) && unicode.IsDigit(ssrune[i]) {
+				status[i] = M
+				i++
+			}
+			if i < len(ssrune) {
+				status[i-1] = E
+			} else if unicode.IsDigit(ssrune[i-1]) {
+				status[i-1] = E
+			}
+		}
+		i++
+	}
 }
 
 func NewModel() *Model {
