@@ -126,7 +126,7 @@ func BulidEmitProMaterix(path string) *[SUM_STATUS]map[rune]float64 {
 
 	for k := range ProMaterix {
 		for i := 0; i < 4; i++ {
-			EmitProMaterix[i][k] = math.Log((float64(ProMaterix[k].BEMS[i] + 1)) / float64(BMESCount[i]))
+			EmitProMaterix[i][k] = math.Log((float64(ProMaterix[k].BEMS[i]) + 0.0001) / float64(BMESCount[i]))
 		}
 	}
 

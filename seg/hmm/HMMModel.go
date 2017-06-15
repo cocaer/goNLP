@@ -17,7 +17,15 @@ type Model struct {
 	EmitPro  *[SUM_STATUS]map[rune]float64
 }
 
-func (self *Model) Viterbi(str string) {
+func (self *Model) getEmitPro(status int, r rune) float64 {
+	re := IMPOSSIBLEPRO
+	if v, ok := self.EmitPro[status][r]; ok {
+		re = v
+	}
+	return re
+}
+
+func (self *Model) Viterbi(str string) []int {
 	ssrune := []rune(str)
 	strLen := len(ssrune)
 	var weight [][]float64
@@ -28,14 +36,14 @@ func (self *Model) Viterbi(str string) {
 	}
 
 	for i := 0; i < SUM_STATUS; i++ {
-		weight[i][0] = self.StartPro[i] + self.EmitPro[i][ssrune[0]]
+		weight[i][0] = self.StartPro[i] + self.getEmitPro(i, ssrune[0])
 	}
 	for i := 1; i < strLen; i++ {
 		for j := 0; j < SUM_STATUS; j++ {
 			weight[j][i] = IMPOSSIBLEPRO
 			path[j][i] = j
 			for k := 0; k < SUM_STATUS; k++ {
-				tmp := weight[k][i-1] + self.TransPro[k][j] + self.EmitPro[j][ssrune[i]]
+				tmp := weight[k][i-1] + self.TransPro[k][j] + self.getEmitPro(j, ssrune[i])
 
 				if tmp > weight[j][i] {
 					weight[j][i] = tmp
@@ -44,17 +52,44 @@ func (self *Model) Viterbi(str string) {
 			}
 		}
 	}
-	result := ""
+	//	result := ""
 	status := SUM_STATUS - 2
 	if weight[status][strLen-1] < weight[SUM_STATUS-1][strLen-1] {
 		status = SUM_STATUS - 1
 	}
-	result = result + string(am[status])
+
+	result := make([]int, strLen)
+	result[strLen-1] = status
 	for i := strLen - 1; i > 0; i-- {
-		result = string(am[path[status][i]]) + result
+		result[i-1] = path[status][i]
 		status = path[status][i]
 	}
+	return result
+}
+
+func (self Model) Cut(s string) []string {
+	status := self.Viterbi(s)
+	result := make([]string, 0)
+	ssrune := []rune(s)
+	begin := 0
+	end := 0
+	for end < len(ssrune) {
+		if status[begin] == 3 {
+			result = append(result, string(ssrune[begin]))
+			begin++
+			end++
+		} else {
+			for end < len(ssrune) && status[end] != 2 {
+				end++
+			}
+			end++
+			result = append(result, string(ssrune[begin:end]))
+			begin = end
+
+		}
+	}
 	fmt.Println(result)
+	return result
 }
 
 func NewModel() *Model {

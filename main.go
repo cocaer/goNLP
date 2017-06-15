@@ -3,8 +3,6 @@ package main
 import "github.com/cocaer/goNLP/seg/hmm"
 
 func main() {
-	//hmm.HmmSaveTrainingFile()
 	m := hmm.NewModel()
-	m.Viterbi("我恨你")
-
+	m.Cut("他来到了网易杭研大厦")
 }
