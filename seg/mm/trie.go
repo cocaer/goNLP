@@ -88,7 +88,7 @@ func parserLetter(srune []rune, cur int) []rune {
 }
 
 //最大正向匹配
-func (self *Trie) FowardMatch(ss string) []string {
+func (self *Trie) Cut(ss string) []string {
 
 	if !isLoadDictFlag {
 		self.loadDictionary()
@@ -109,14 +109,13 @@ func (self *Trie) FowardMatch(ss string) []string {
 		if isEnglish(srune[start]) {
 			en := parserLetter(srune, start)
 			start += len(en)
-
 			result = append(result, en)
 		}
 		if start >= len(srune) {
 			break
 		}
 
-		for {
+		for start < len(srune) {
 			s := srune[start:end]
 			_, err := self.search(s)
 			if err == nil {
@@ -137,6 +136,72 @@ func (self *Trie) FowardMatch(ss string) []string {
 		sr = append(sr, string(v))
 	}
 	return sr
+}
+
+func parserRLetter(srune []rune, end, start int) []rune {
+	tmp := end - 1
+	for tmp > start && isEnglish(srune[tmp]) {
+		tmp--
+	}
+	if tmp < start {
+		return srune[start : end+1]
+	}
+	return srune[tmp+1 : end+1]
+}
+func parserRDigit(srune []rune, end, start int) []rune {
+	tmp := end - 1
+	for tmp >= start && unicode.IsDigit(srune[tmp]) {
+		tmp--
+	}
+	fmt.Println(tmp, start, end)
+	if tmp < start {
+		return srune[start : end+1]
+	}
+	return srune[tmp+1 : end+1]
+}
+
+//最大逆向匹配
+func (self *Trie) Rcut(ss string) []string {
+	if !isLoadDictFlag {
+		self.loadDictionary()
+	}
+	ssrune := []rune(ss)
+	result := make([]string, 0)
+	end := len(ssrune)
+	start := 0
+	for start < end {
+		if unicode.IsDigit(ssrune[end-1]) {
+			digit := parserRDigit(ssrune, end-1, start)
+			end -= len(digit)
+			result = append(result, string(digit))
+		}
+		if start >= end {
+			break
+		}
+		if isEnglish(ssrune[end-1]) {
+			en := parserRLetter(ssrune, end-1, start)
+			end -= len(en)
+			result = append(result, string(en))
+		}
+		if start >= end {
+			break
+		}
+		tmp := start
+		for tmp < end {
+			s := ssrune[tmp:end]
+			_, err := self.search(s)
+			if err == nil {
+				result = append(result, string(s))
+				end -= len(s)
+			} else if end == tmp+1 {
+				result = append(result, string(s))
+				end--
+			} else {
+				tmp++
+			}
+		}
+	}
+	return result
 }
 
 //LoadDictionary todo

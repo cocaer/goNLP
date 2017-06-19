@@ -1,8 +1,10 @@
 package hmm
 
-import "github.com/cocaer/goNLP/data"
+import (
+	"unicode"
 
-import "unicode"
+	"github.com/cocaer/goNLP/data"
+)
 
 const (
 	B = iota
@@ -68,14 +70,18 @@ func (self *Model) Viterbi(str string) []int {
 	return result
 }
 
-func (self Model) Cut(s string) []string {
+func (self *Model) Cut(s string) []string {
+
+	if len(s) == 0 {
+		return nil
+	}
 	status := self.Viterbi(s)
 	result := make([]string, 0)
 	ssrune := []rune(s)
 	begin := 0
 	end := 0
-	processDigital(status, s)
-	processLetter(status, s)
+	//processDigital(status, s)
+	//processLetter(status, s)
 	for end < len(ssrune) {
 		if status[begin] == S {
 			result = append(result, string(ssrune[begin]))

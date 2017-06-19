@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cocaer/goNLP/data"
 	seg "github.com/cocaer/goNLP/seg/config"
 )
 
@@ -126,7 +127,7 @@ func BulidEmitProMaterix(path string) *[SUM_STATUS]map[rune]float64 {
 
 	for k := range ProMaterix {
 		for i := 0; i < 4; i++ {
-			EmitProMaterix[i][k] = math.Log((float64(ProMaterix[k].BEMS[i]) + 0.0001) / float64(BMESCount[i]))
+			EmitProMaterix[i][k] = math.Log((float64(ProMaterix[k].BEMS[i]) + 1) / float64(BMESCount[i]))
 		}
 	}
 
@@ -137,8 +138,9 @@ func BulidEmitProMaterix(path string) *[SUM_STATUS]map[rune]float64 {
 }
 
 func HmmSaveTrainingFile() {
-	TransferMatrix := BulidTransferProMaterix(seg.SegConfig["hmmTrainingFile"])
-	EmitProMaterix := BulidEmitProMaterix(seg.SegConfig["hmmTrainingFile"])
+	data.CreateBEMSFile(seg.SegConfig["hmmTrainingFile"], seg.SegConfig["hmmBEMSFile"])
+	TransferMatrix := BulidTransferProMaterix(seg.SegConfig["hmmBEMSFile"])
+	EmitProMaterix := BulidEmitProMaterix(seg.SegConfig["hmmBEMSFile"])
 	outFile, err := os.Create(seg.SegConfig["hmmModelFile"])
 
 	defer outFile.Close()
