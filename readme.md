@@ -8,16 +8,20 @@
 package main
 
 import "github.com/cocaer/goNLP/seg/hmm"
+import "github.com/cocaer/goNLP/seg/bhmm"
+import "github.com/cocaer/goNLP/seg/mm"
 import "fmt"
 func main() {
-    m := hmm.NewModel()
-    fmt.Println(m.Cut("王者荣耀是一款十分优秀的手游，最高同时两百万人在线。PS：我瞎说的"))
+    //m := mm.NewModel()
+    m :=bhmm.NewModel() //基于hmm的优化实现
+    //m := hmm.NewModel() //纯hmm实现，没有优化
+    fmt.Println(m.Cut("结婚的和尚未结婚的"))
 }
 
 ```
 
 ``` txt
-output:[他来 到 了 网易 杭研 大厦]
+output:[]
 ```
 
 

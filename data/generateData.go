@@ -1,5 +1,9 @@
 package data
 
+//
+//给定一个已经分好词的文件，
+//将它转换成BEMS序列
+//
 import (
 	"bufio"
 	"fmt"

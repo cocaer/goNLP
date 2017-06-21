@@ -153,7 +153,6 @@ func parserRDigit(srune []rune, end, start int) []rune {
 	for tmp >= start && unicode.IsDigit(srune[tmp]) {
 		tmp--
 	}
-	fmt.Println(tmp, start, end)
 	if tmp < start {
 		return srune[start : end+1]
 	}
@@ -201,6 +200,11 @@ func (self *Trie) Rcut(ss string) []string {
 			}
 		}
 	}
+	for i := 0; i < len(result)/2; i++ {
+		tmp := result[i]
+		result[i] = result[len(result)-1-i]
+		result[len(result)-1-i] = tmp
+	}
 	return result
 }
 
@@ -229,8 +233,8 @@ func (self *Trie) loadDictionary() {
 	isLoadDictFlag = true
 }
 
-//NewTrie 建立字典树
-func NewTrie() *Trie {
+//NewModel 建立字典树
+func NewModel() *Trie {
 	dictTrie := new(Trie)
 	dictTrie.Root = &TrieNode{0, map[rune]*TrieNode{}}
 	return dictTrie

@@ -1,8 +1,6 @@
 package hmm
 
 import (
-	"unicode"
-
 	"github.com/cocaer/goNLP/data"
 )
 
@@ -71,7 +69,15 @@ func (self *Model) Viterbi(str string) []int {
 }
 
 func (self *Model) Cut(s string) []string {
+	ss := splitSentence(s)
+	result := make([]string, 0)
+	for _, senctence := range ss {
+		result = append(result, self.CutSentence(senctence)...)
+	}
+	return result
+}
 
+func (self *Model) CutSentence(s string) []string {
 	if len(s) == 0 {
 		return nil
 	}
@@ -80,8 +86,6 @@ func (self *Model) Cut(s string) []string {
 	ssrune := []rune(s)
 	begin := 0
 	end := 0
-	//processDigital(status, s)
-	//processLetter(status, s)
 	for end < len(ssrune) {
 		if status[begin] == S {
 			result = append(result, string(ssrune[begin]))
@@ -100,53 +104,21 @@ func (self *Model) Cut(s string) []string {
 	return result
 }
 
-func isLetter(r rune) bool {
-	flag := false
-	if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
-		flag = true
-	}
-	return flag
-}
-
-func processLetter(status []int, s string) {
+func splitSentence(s string) []string {
+	var ma = map[rune]byte{'。': 1, '！': 1, '，': 1, '？': 1}
 	ssrune := []rune(s)
-	var i = 0
-	for i < len(ssrune) {
-		if isLetter(ssrune[i]) {
-			status[i] = B
-			i++
-			for i < len(ssrune) && isLetter(ssrune[i]) {
-				status[i] = M
-				i++
-			}
-			if i < len(ssrune) {
-				status[i-1] = E
-			} else if isLetter(ssrune[i-1]) {
-				status[i-1] = E
-			}
+	tmp := make([]rune, 0)
+	ss := make([]string, 0)
+	for begin := 0; begin < len(ssrune); begin++ {
+		tmp = append(tmp, ssrune[begin])
+		if _, ok := ma[ssrune[begin]]; ok {
+			ss = append(ss, string(tmp))
+			tmp = make([]rune, 0)
+		} else if begin == len(ssrune)-1 {
+			ss = append(ss, string(tmp))
 		}
-		i++
 	}
-}
-func processDigital(status []int, s string) {
-	ssrune := []rune(s)
-	var i = 0
-	for i < len(ssrune) {
-		if unicode.IsDigit(ssrune[i]) {
-			status[i] = B
-			i++
-			for i < len(ssrune) && unicode.IsDigit(ssrune[i]) {
-				status[i] = M
-				i++
-			}
-			if i < len(ssrune) {
-				status[i-1] = E
-			} else if unicode.IsDigit(ssrune[i-1]) {
-				status[i-1] = E
-			}
-		}
-		i++
-	}
+	return ss
 }
 
 func NewModel() *Model {
