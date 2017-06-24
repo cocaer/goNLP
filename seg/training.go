@@ -1,4 +1,4 @@
-package bhmm
+package seg
 
 import (
 	"bufio"
@@ -6,8 +6,6 @@ import (
 	"math"
 	"os"
 	"strings"
-
-	seg "github.com/cocaer/goNLP/seg/config"
 )
 
 const IMPOSSIBLEPRO = -3.14e+10
@@ -32,7 +30,7 @@ var am = map[int]rune{
 	3: 'S',
 }
 
-var BMESCount [4]uint64
+var BMESCount [SUM_STATUS]uint64
 
 //BulidTransferProMaterix 	  求出
 //TransferMatrix ：转移矩阵 4*4
@@ -83,13 +81,7 @@ func BulidTransferProMaterix(path string) [SUM_STATUS][SUM_STATUS]float64 {
 	return transferProMaterix
 }
 
-//BulidEmitProMaterix 求出
-//EmitProMaterix : 存储结构为四维数组 类型为map[rune]float64
-//				   B   '汉字':probalitity(取对数)
-//				   M
-//                 E
-//				   S
-func BulidEmitProMaterix(path string) *[SUM_STATUS]map[string]float64 {
+func HmmBulidEmitPro(path string) *[SUM_STATUS]map[string]float64 {
 	var ProMaterix = make(map[string]*Feature)
 	var EmitProMaterix [SUM_STATUS]map[string]float64
 	for i := 0; i < SUM_STATUS; i++ {
@@ -133,11 +125,10 @@ func BulidEmitProMaterix(path string) *[SUM_STATUS]map[string]float64 {
 	return &EmitProMaterix
 }
 
-func HmmSaveTrainingFile() {
-	//	data.CreateBEMSFile(seg.SegConfig["hmmTrainingFile"], seg.SegConfig["hmmBEMSFile"])
-	TransferMatrix := BulidTransferProMaterix(seg.SegConfig["bhmmBEMSFile"])
-	EmitProMaterix := BulidEmitProMaterix(seg.SegConfig["bhmmBEMSFile"])
-	outFile, err := os.Create(seg.SegConfig["bhmmModelFile"])
+func HmmSaveTraning() {
+	TransferMatrix := BulidTransferProMaterix(SegConfig["bhmmBEMSFile"])
+	EmitProMaterix := HmmBulidEmitPro(SegConfig["bhmmBEMSFile"])
+	outFile, err := os.Create(SegConfig["bhmmModelFile"])
 
 	defer outFile.Close()
 	if err != nil {
@@ -145,12 +136,12 @@ func HmmSaveTrainingFile() {
 	}
 
 	outFile.WriteString("package data \n" +
-		"const BSUM_STATUS  =4\n" +
+		"const SUM_STATUS  =4\n" +
 		"var BStartProMaterix =[SUM_STATUS]float64{" +
 		"-0.26268660809250016, -3.14e+10 ,-3.14e+10, -1.4652633398537678" +
 		"}\n")
 
-	outFile.WriteString("var BTransferMatrix  =[BSUM_STATUS][BSUM_STATUS]float64{")
+	outFile.WriteString("var BTransferMatrix  =[SUM_STATUS][SUM_STATUS]float64{")
 
 	for i := 0; i < SUM_STATUS; i++ {
 		var s = fmt.Sprintf("{%f,%f,%f,%f}", TransferMatrix[i][0],

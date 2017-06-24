@@ -1,4 +1,4 @@
-package mm
+package seg
 
 import (
 	"bufio"
@@ -6,8 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-
-	seg "github.com/cocaer/goNLP/seg/config"
 
 	"unicode"
 )
@@ -208,10 +206,9 @@ func (self *Trie) Rcut(ss string) []string {
 	return result
 }
 
-//LoadDictionary todo
 func (self *Trie) loadDictionary() {
 
-	dictName := seg.SegConfig["mmDictPath"]
+	dictName := SegConfig["mmDictPath"]
 
 	dict, err := os.Open(dictName)
 	if err != nil {
@@ -233,8 +230,8 @@ func (self *Trie) loadDictionary() {
 	isLoadDictFlag = true
 }
 
-//NewModel 建立字典树
-func NewModel() *Trie {
+//NewMMSeg 建立字典树
+func NewMMSeg() *Trie {
 	dictTrie := new(Trie)
 	dictTrie.Root = &TrieNode{0, map[rune]*TrieNode{}}
 	return dictTrie

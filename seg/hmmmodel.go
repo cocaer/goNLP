@@ -1,8 +1,7 @@
-package bhmm
+package seg
 
 import (
 	"github.com/cocaer/goNLP/data"
-	"github.com/cocaer/goNLP/seg/mm"
 )
 
 const (
@@ -17,7 +16,7 @@ type Model struct {
 	StartPro [SUM_STATUS]float64
 	TransPro *[SUM_STATUS][SUM_STATUS]float64
 	EmitPro  *[SUM_STATUS]map[string]float64
-	Trie     *mm.Trie
+	Trie     *Trie
 }
 
 func (self *Model) getEmitPro(status int, r string) float64 {
@@ -141,11 +140,11 @@ func splitSentence(s string) []string {
 	}
 	return ss
 }
-func NewModel() *Model {
+func NewHmmSeg() *Model {
 	m := new(Model)
 	m.StartPro = data.BStartProMaterix
 	m.EmitPro = data.BEmitProMaterix
 	m.TransPro = &data.BTransferMatrix
-	m.Trie = mm.NewModel()
+	m.Trie = NewMMSeg()
 	return m
 }
