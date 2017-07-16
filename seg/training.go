@@ -87,13 +87,11 @@ func HmmBulidEmitPro(path string) *[SUM_STATUS]map[string]float64 {
 	for i := 0; i < SUM_STATUS; i++ {
 		EmitProMaterix[i] = make(map[string]float64)
 	}
-
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println(path, " is wrong")
 	}
 	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		s := scanner.Text()
@@ -115,7 +113,7 @@ func HmmBulidEmitPro(path string) *[SUM_STATUS]map[string]float64 {
 
 	for k := range ProMaterix {
 		for i := 0; i < 4; i++ {
-			EmitProMaterix[i][k] = math.Log(10000*(float64(ProMaterix[k].BEMS[i])+1)/float64(BMESCount[i])) - math.Log(10000)
+			EmitProMaterix[i][k] = math.Log((float64(ProMaterix[k].BEMS[i]) + 1) / float64(BMESCount[i]))
 		}
 	}
 
@@ -126,9 +124,9 @@ func HmmBulidEmitPro(path string) *[SUM_STATUS]map[string]float64 {
 }
 
 func HmmSaveTraning() {
-	TransferMatrix := BulidTransferProMaterix(SegConfig["bhmmBEMSFile"])
-	EmitProMaterix := HmmBulidEmitPro(SegConfig["bhmmBEMSFile"])
-	outFile, err := os.Create(SegConfig["bhmmModelFile"])
+	TransferMatrix := BulidTransferProMaterix(SegConfig["hmmBEMSFile"])
+	EmitProMaterix := HmmBulidEmitPro(SegConfig["hmmBEMSFile"])
+	outFile, err := os.Create(SegConfig["hmmModelFile"])
 
 	defer outFile.Close()
 	if err != nil {
@@ -136,12 +134,11 @@ func HmmSaveTraning() {
 	}
 
 	outFile.WriteString("package data \n" +
-		"const SUM_STATUS  =4\n" +
-		"var BStartProMaterix =[SUM_STATUS]float64{" +
+		"var StartProMaterix =[4]float64{" +
 		"-0.26268660809250016, -3.14e+10 ,-3.14e+10, -1.4652633398537678" +
 		"}\n")
 
-	outFile.WriteString("var BTransferMatrix  =[SUM_STATUS][SUM_STATUS]float64{")
+	outFile.WriteString("var TransferMatrix  =[4][4]float64{")
 
 	for i := 0; i < SUM_STATUS; i++ {
 		var s = fmt.Sprintf("{%f,%f,%f,%f}", TransferMatrix[i][0],
@@ -153,13 +150,19 @@ func HmmSaveTraning() {
 	}
 	outFile.WriteString("}\n")
 
-	outFile.WriteString("var BEmitProMaterix  =" +
-		"&[SUM_STATUS]map[string]float64{")
+	outFile.WriteString("var EmitProMaterix  =" +
+		"&[4]map[string]float64{")
 
 	for i := 0; i < SUM_STATUS; i++ {
 		outFile.WriteString("{\n")
 		for k := range EmitProMaterix[i] {
-			s := fmt.Sprintf("\"%s\":%f,\n", k, EmitProMaterix[i][k])
+			var s string
+			if k[0] == '"' {
+				s = fmt.Sprintf("\"\\%s\":%f,\n", k, EmitProMaterix[i][k])
+
+			} else {
+				s = fmt.Sprintf("\"%s\":%f,\n", k, EmitProMaterix[i][k])
+			}
 			outFile.WriteString(s)
 		}
 		outFile.WriteString("},\n")
